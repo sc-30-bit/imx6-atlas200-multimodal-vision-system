@@ -9,6 +9,7 @@ env/
 
 # Large local model weights. Download them with the README instructions instead.
 MiniCPM&MediaMTX/models/
+MiniCPM&MediaMTX/mediamtx_v1.17.1_windows_amd64/mediamtx.exe
 *.safetensors
 *.bin
 *.pt
