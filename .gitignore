@@ -1,0 +1,32 @@
+# Python cache/runtime files
+__pycache__/
+*.py[cod]
+
+# Local virtual environments
+.venv/
+venv/
+env/
+
+# Large local model weights. Download them with the README instructions instead.
+MiniCPM&MediaMTX/models/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+*.om
+
+# Generated IMX6 build artifacts
+html&qt/cgi-bin/*.cgi
+html&qt/database/*.db
+
+# Qt generated/build artifacts
+html&qt/imx6_qt_client/*.o
+html&qt/imx6_qt_client/moc_*.cpp
+html&qt/imx6_qt_client/moc_*.o
+html&qt/imx6_qt_client/Makefile
+html&qt/imx6_qt_client/*.pro.user
+
+# OS/editor files
+.DS_Store
+Thumbs.db

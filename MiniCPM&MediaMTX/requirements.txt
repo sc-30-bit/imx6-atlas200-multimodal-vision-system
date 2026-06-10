@@ -1,0 +1,11 @@
+transformers
+accelerate
+sentencepiece
+pillow
+opencv-python
+fastapi
+uvicorn
+python-multipart
+huggingface_hub
+timm
+einops

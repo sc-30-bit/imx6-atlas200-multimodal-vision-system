@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMX6 多模态视觉分析系统</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Microsoft YaHei", "SimHei", Arial, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px;
+}
+
+.container {
+    display: flex;
+    gap: 16px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    padding: 16px;
+    max-width: 960px;
+    width: 100%;
+}
+
+.left-panel {
+    flex: 0 0 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 340px;
+}
+
+.title {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    color: #1a1a2e;
+    padding: 8px 0 4px;
+    border-bottom: 2px solid #4a90d9;
+    margin-bottom: 0;
+}
+
+.subtitle {
+    font-size: 13px;
+    text-align: center;
+    color: #888;
+    padding: 4px 0 8px;
+    border-bottom: 2px solid #4a90d9;
+    margin-bottom: 4px;
+}
+
+.preview-area {
+    width: 460px;
+    height: 345px;
+    background-color: #1a1a2e;
+    border: 2px solid #4a5568;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.preview-area .placeholder {
+    color: #888;
+    font-size: 16px;
+    text-align: center;
+}
+
+.preview-area img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.status {
+    color: #0066cc;
+    font-size: 14px;
+    padding: 6px 0;
+    min-height: 28px;
+}
+
+.status.error {
+    color: #cc0000;
+}
+
+.status.success {
+    color: #008800;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-group input[type="text"] {
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input[type="text"]:focus {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74,144,217,0.2);
+}
+
+.form-group textarea {
+    height: 82px;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group textarea:focus {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74,144,217,0.2);
+}
+
+.btn {
+    height: 38px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+    font-weight: bold;
+}
+
+.btn-analyze {
+    background-color: #4a90d9;
+    color: #fff;
+}
+
+.btn-analyze:hover {
+    background-color: #357abd;
+}
+
+.btn-analyze:disabled {
+    background-color: #a0c4e8;
+    cursor: not-allowed;
+}
+
+.btn-history {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.btn-history:hover {
+    background-color: #5a6268;
+}
+
+.btn-exit {
+    background-color: #dc3545;
+    color: #fff;
+    height: 34px;
+}
+
+.btn-exit:hover {
+    background-color: #c82333;
+}
+
+.result-area {
+    flex: 1;
+    min-height: 165px;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    font-size: 14px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.result-area.placeholder {
+    color: #999;
+}
+
+.result-label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #4a90d9;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.history-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.history-overlay.active {
+    display: flex;
+}
+
+.history-panel {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 920px;
+    width: 95%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.history-panel h3 {
+    margin-bottom: 12px;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+}
+
+.history-panel table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.history-panel th, .history-panel td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.history-panel th {
+    background-color: #f0f2f5;
+    font-weight: bold;
+}
+
+.history-panel .btn-close {
+    float: right;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+}
+
+.history-panel .btn-close:hover {
+    color: #333;
+}
+
+@media (max-width: 860px) {
+    .container {
+        flex-direction: column;
+        align-items: center;
+    }
+    .left-panel {
+        flex: none;
+        width: 100%;
+        max-width: 460px;
+    }
+    .preview-area {
+        width: 100%;
+        max-width: 460px;
+    }
+    .right-panel {
+        width: 100%;
+        max-width: 460px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="left-panel">
+        <div class="title">嵌入式多模态视觉分析系统</div>
+        <div class="subtitle">匿名成员 A    匿名成员 B</div>
+
+        <div class="preview-area" id="previewArea">
+            <span class="placeholder" id="previewPlaceholder">图像预览区域</span>
+            <img id="previewImage" src="" alt="分析画面" style="display:none;">
+        </div>
+
+        <div class="status" id="statusText">状态：等待操作</div>
+    </div>
+
+    <div class="right-panel">
+        <form id="analyzeForm" method="POST" action="/cgi-bin/analyze.cgi" enctype="application/x-www-form-urlencoded" target="resultFrame">
+            <div class="form-group">
+                <label for="ipInput">PC IP：</label>
+                <input type="text" id="ipInput" name="ip" value="192.168.137.101" placeholder="例如：192.168.137.101">
+            </div>
+
+            <div class="form-group">
+                <label for="promptInput">分析提示词：</label>
+                <textarea id="promptInput" name="prompt" placeholder="请输入分析提示词">请判断当前画面中是否有车辆或行人，只输出一句话。</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-analyze" id="analyzeBtn" onclick="return onSubmitAnalyze()">分析当前画面</button>
+
+            <button type="button" class="btn btn-history" id="historyBtn" onclick="loadHistory()">查看历史记录</button>
+        </form>
+
+        <div class="result-label">分析结果：</div>
+        <div class="result-area placeholder" id="resultArea">MiniCPM-V 4.0 分析结果将在这里显示</div>
+
+        <button type="button" class="btn btn-exit" onclick="window.close()">退出</button>
+    </div>
+</div>
+
+<iframe name="resultFrame" id="resultFrame" style="display:none;"></iframe>
+
+<div class="history-overlay" id="historyOverlay">
+    <div class="history-panel">
+        <button class="btn-close" onclick="closeHistory()">&times;</button>
+        <h3>历史分析记录</h3>
+        <div id="historyContent">
+            <p style="text-align:center;color:#999;">加载中...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function onSubmitAnalyze() {
+    var btn = document.getElementById('analyzeBtn');
+    btn.disabled = true;
+    btn.textContent = '分析中...';
+    document.getElementById('statusText').textContent = '状态：正在请求 PC 端 MiniCPM-V 4.0 服务';
+    document.getElementById('statusText').className = 'status';
+    document.getElementById('resultArea').textContent = '正在分析当前画面，请稍候...';
+    document.getElementById('resultArea').className = 'result-area placeholder';
+
+    document.getElementById('resultFrame').onload = function() {
+        setTimeout(function() {
+            var statusEl = document.getElementById('statusText');
+            if (statusEl.textContent.indexOf('分析完成') === -1 && statusEl.textContent.indexOf('分析失败') === -1) {
+                statusEl.textContent = '状态：响应超时或解析失败';
+                statusEl.className = 'status error';
+            }
+            resetButton();
+        }, 100);
+    };
+
+    return true;
+}
+
+function displayResult(data) {
+    var statusEl = document.getElementById('statusText');
+    var resultEl = document.getElementById('resultArea');
+
+    if (data.status === 'ok') {
+        var displayText = data.result || '';
+        if (data.cost_time && data.cost_time > 0) {
+            displayText += '\n\n耗时：' + parseFloat(data.cost_time).toFixed(3) + ' 秒';
+        }
+
+        resultEl.textContent = displayText;
+        resultEl.className = 'result-area';
+        statusEl.textContent = '状态：分析完成';
+        statusEl.className = 'status success';
+
+        if (data.image) {
+            var img = document.getElementById('previewImage');
+            img.src = 'data:image/jpeg;base64,' + data.image;
+            img.style.display = 'block';
+            document.getElementById('previewPlaceholder').style.display = 'none';
+        }
+    } else {
+        resultEl.textContent = '分析失败：\n' + (data.message || '未知错误');
+        resultEl.className = 'result-area';
+        statusEl.textContent = '状态：分析失败';
+        statusEl.className = 'status error';
+    }
+
+    resetButton();
+}
+
+function resetButton() {
+    var btn = document.getElementById('analyzeBtn');
+    btn.disabled = false;
+    btn.textContent = '分析当前画面';
+}
+
+function loadHistory() {
+    document.getElementById('historyOverlay').classList.add('active');
+    document.getElementById('historyContent').innerHTML = '<p style="text-align:center;color:#999;">加载中...</p>';
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/cgi-bin/history.cgi', true);
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var data = JSON.parse(xhr.responseText);
+                renderHistory(data);
+            } catch(e) {
+                document.getElementById('historyContent').innerHTML =
+                    '<p style="color:red;">数据解析失败: ' + e.message + '</p>';
+            }
+        } else {
+            document.getElementById('historyContent').innerHTML =
+                '<p style="color:red;">请求失败，状态码: ' + xhr.status + '</p>';
+        }
+    };
+    xhr.onerror = function() {
+        document.getElementById('historyContent').innerHTML =
+            '<p style="color:red;">网络请求失败</p>';
+    };
+    xhr.send();
+}
+
+function renderHistory(records) {
+    var container = document.getElementById('historyContent');
+    if (!records || records.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:#999;">暂无历史记录</p>';
+        return;
+    }
+
+    var html = '<table><thead><tr><th>序号</th><th>IP地址</th><th>提示词</th><th>分析结果</th><th>图片</th><th>耗时(秒)</th><th>时间</th></tr></thead><tbody>';
+
+    for (var i = 0; i < records.length; i++) {
+        var r = records[i];
+        html += '<tr>';
+        html += '<td>' + (i + 1) + '</td>';
+        html += '<td>' + escapeHtml(r.ip || '') + '</td>';
+        html += '<td>' + escapeHtml(r.prompt || '') + '</td>';
+        html += '<td>' + escapeHtml(r.result || '') + '</td>';
+        html += '<td>';
+        if (r.image) {
+            html += '<img src="data:image/jpeg;base64,' + escapeHtml(r.image) + '" style="max-height:60px;cursor:pointer;" onclick="showImageFull(this.src)" title="点击查看大图">';
+        } else {
+            html += '-';
+        }
+        html += '</td>';
+        html += '<td>' + (r.cost_time != null ? parseFloat(r.cost_time).toFixed(3) : '') + '</td>';
+        html += '<td>' + escapeHtml(r.created_at || '') + '</td>';
+        html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function showImageFull(src) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;';
+    overlay.onclick = function() { document.body.removeChild(overlay); };
+    var img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'max-width:90%;max-height:90%;border-radius:8px;';
+    overlay.appendChild(img);
+    document.body.appendChild(overlay);
+}
+
+function closeHistory() {
+    document.getElementById('historyOverlay').classList.remove('active');
+}
+
+function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+document.getElementById('historyOverlay').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeHistory();
+    }
+});
+</script>
+
+</body>
+</html>
